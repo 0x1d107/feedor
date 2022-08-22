@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns="http://www.w3.org/1999/xhtml">
+    <xsl:output method="html" indent="yes" encoding="UTF-8"/>
+    <xsl:template match="/rss/channel">
+        <html>
+            <head>
+                <title>
+                    <xsl:value-of select="title" />
+                </title>
+            </head>
+            <body>
+                <h1><a href="{link}"><xsl:value-of select="title" /></a></h1>
+                <ul>
+                    <xsl:apply-templates select="item" />
+                </ul>
+            </body>
+        </html>
+    </xsl:template>
+    <xsl:template match="item">
+        <li>
+            <div><b>[<a href="{source/@url}"><xsl:value-of select="source"/></a>@<xsl:value-of select="pubDate"/>]</b></div> <h2><a href="{link}"><xsl:value-of select="title"/></a></h2>
+            <p >
+                <xsl:value-of select="description" disable-output-escaping="yes"/>
+            </p>
+            <p>
+            <xsl:apply-templates select="enclosure" />
+            </p>
+        </li>
+    </xsl:template>
+    <xsl:template match="enclosure[starts-with(@type,'image')]">
+        <details>
+            <summary>Image Enclosure</summary>
+            <a href="{@url}" target="_blank"><img style="max-width:100%;" loading="lazy" src="{@url}"/></a>
+        </details>
+    </xsl:template>
+    <xsl:template match="enclosure[starts-with(@type,'video')]">
+        <details>
+            <summary>Video Enclosure</summary>
+            <video style="max-width:100%" controls="true" preload="none">
+                <source src="{@url}" type="{@type}"/>
+            </video>
+        </details>
+    </xsl:template>
+    <xsl:template match="enclosure[starts-with(@type,'audio')]">
+        <audio width="100%" controls="true" preload="none">
+            <source src="{@url}" type="{@type}"/>
+        </audio>
+    </xsl:template>
+    
+
+</xsl:stylesheet>

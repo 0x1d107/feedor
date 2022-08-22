@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<?xml-stylesheet type="text/xsl" href="feed.xsl" ?>
+<rss version="2.0">
+    <channel>
+        <title>Reader Feed</title>
+        <link>http://127.0.0.1:8080</link>
+        <description>Combined RSS feeds</description>
+        {% for entry in entries %}
+        <item>
+            {% if entry.title %}
+            <title>{{ entry.title }}</title>
+            {%else%}
+            <title>#</title>
+            {%endif%}
+            <link>{{ entry.link }}</link>
+            {% autoescape false %}
+            <description> <![CDATA[ {{ entry.description }} ]]> </description>
+            {%endautoescape%}
+            {% if entry.published %}
+            <pubDate>{{ entry.published }}</pubDate>
+            {%else%}
+            <pubDate>{{ entry.updated }}</pubDate>
+            {%endif%}
+            <source url="{{ entry.source }}" >{{ entry.source_title }}</source>
+            {% if entry.id %}
+            <guid isPermaLink="false">{{ entry.id }}</guid>
+            {%else%}
+            <guid isPermaLink="false">{{ entry.link }}</guid>
+            {%endif%}
+            {% for enclosure in entry.enclosures %}
+            <enclosure url="{{ enclosure.href }}" type="{{ enclosure.type }}" length="{{enclosure.length}}" />
+            {%endfor%}
+        </item>
+        {% endfor %}
+    </channel>
+</rss>
