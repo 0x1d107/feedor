@@ -7,18 +7,23 @@
                 <title>
                     <xsl:value-of select="title" />
                 </title>
+                <link rel="stylesheet" href="feed.css"/>
+                <link rel="alternate" href="/" type="application/rss+xml" title="RSS"/>
             </head>
             <body>
                 <h1><a href="{link}"><xsl:value-of select="title" /></a></h1>
-                <ul>
+                <ul id="feed">
                     <xsl:apply-templates select="item" />
                 </ul>
+                <div style="text-align:center" id="next">
+                    <a  href="{@generator}">Next</a>
+                </div>
             </body>
         </html>
     </xsl:template>
     <xsl:template match="item">
         <li>
-            <div><b>[<a href="{source/@url}"><xsl:value-of select="source"/></a>@<xsl:value-of select="pubDate"/>]</b></div> <h2><a href="{link}"><xsl:value-of select="title"/></a></h2>
+            <div class="source"><b>[<a href="{source/@url}"><xsl:value-of select="source"/></a>@<xsl:value-of select="pubDate"/>]</b></div> <h2><a href="{link}"><xsl:value-of select="title"/></a></h2>
             <p >
                 <xsl:value-of select="description" disable-output-escaping="yes"/>
             </p>

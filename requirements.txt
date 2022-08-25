@@ -3,3 +3,5 @@ feedparser
 aiohttp
 cssselect
 bleach
+jinja2
+python-dateutil

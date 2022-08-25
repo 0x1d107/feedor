@@ -1,0 +1,38 @@
+body{
+    font-family: sans-serif;
+    background-color: #121212;
+    color: #eee;
+    font-size: 13pt;
+}
+a{
+    color:deepskyblue;
+}
+body pre{
+    font-size: 9pt;
+    font-family: monospace;
+    overflow: scroll;
+}
+code{
+    font-family: monospace;
+}
+#feed{
+    list-style: none;
+    width:95%;
+}
+img{
+    max-width:100%;
+}
+.source {
+    font-size: 10pt;
+}
+#next{
+    text-align: center;
+}
+#feed>li{
+    border-top: #555 solid 1px;
+    border-bottom: #555 solid 1px;
+    overflow-wrap: break-word;
+    overflow: scroll;
+    padding-top: 1em;
+    padding-bottom: 1em;
+}
