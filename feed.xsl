@@ -16,7 +16,7 @@
                     <xsl:apply-templates select="item" />
                 </ul>
                 <div style="text-align:center" id="next">
-                    <a  href="{@generator}">Next</a>
+                    <a  href="{generator}">Next</a>
                 </div>
             </body>
         </html>

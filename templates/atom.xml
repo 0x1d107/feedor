@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="atom.xsl" ?>
+<atom:feed xmlns:atom="http://www.w3.org/2005/Atom">
+    <atom:title>Reader Feed</atom:title>
+    <atom:id>urn:uuid:d3b55992-a53c-4b38-8375-5a933d0f5fb4</atom:id>
+    <atom:updated>{{updated}}</atom:updated>
+    <atom:link rel="self" href="/atom.xml" />
+    <atom:link rel="alternate" type="text/html" href="/atom.html" />
+    <atom:link rel="next" href="/atom.xml?next={{page_key[0]}}:{{page_key[1]}}" />
+    <atom:author>
+        <atom:name> Feedor feed aggregator</atom:name>
+    </atom:author>
+    {% for entry in entries %}
+    <atom:entry>
+        {% if entry.id %}
+        <atom:id>{{ entry.id }}</atom:id>
+        {%else%}
+        <atom:id>{{ entry.link }}</atom:id>
+        {%endif%}
+        
+        <atom:updated>{{ rfc_time(entry) }}</atom:updated>
+        {% for link in entry.links %}
+        <atom:link rel="{{link.rel}}" type="{{link.type}}" href="{{link.href}}" />
+        {%endfor%}
+        {% if entry.title %}
+        <atom:title>{{ entry.title }}</atom:title>
+        {%else%}
+        <atom:title>#</atom:title>
+        {%endif%}
+        {% autoescape false %}
+        <atom:content type="html"><![CDATA[ {{ entry.description }} ]]></atom:content>
+        {%endautoescape%}
+        <atom:source>
+            <atom:id>{{entry.source}}</atom:id>
+            <atom:link rel="self" href="{{entry.source}}"/>
+            <atom:title>{{entry.source_title}}</atom:title>
+            <atom:updated>{{ rfc_time(entry) }}</atom:updated>
+        </atom:source>
+    </atom:entry>
+    {%endfor%}
+</atom:feed>

@@ -6,6 +6,8 @@ from io import BytesIO, StringIO
 import feedparser
 from feedparser.util import FeedParserDict
 import time, calendar
+import datetime
+from email.utils import format_datetime
 import jinja2
 import lxml.html as lhtml
 from lxml import etree
@@ -54,6 +56,9 @@ class database:
         self.conn = sqlite3.connect(dbname)
         self.cursor = self.conn.cursor()
         self.cursor.execute(database.INIT)
+    def __del__(self):
+        self.conn.commit()
+        self.conn.close()
 
     def update_entry(self, entry):
         pub_time = get_time(entry)
@@ -90,7 +95,7 @@ with open("feeds.txt") as f:
         for line in f.readlines()
         if line.strip() and not line.startswith("#")
     ]
-"""
+'''
 feeds.append(
     HTMLAdapter(
         "https://mastodon.ml/@rf",
@@ -108,6 +113,7 @@ feeds.append(
         },
     )
 )
+'''
 feeds.append(
     HTMLAdapter(
         "https://t.me/s/var_log_shitpost",
@@ -153,7 +159,6 @@ feeds.append(
         },
     )
 )
-"""
 
 
 async def fetch(session, url):
@@ -172,7 +177,10 @@ def get_time(e):
     return calendar.timegm(
         e.get("updated_parsed", e.get("published_parsed", time.gmtime(0)))
     )
-
+def rfc3339_time(e):
+    return datetime.datetime.fromtimestamp(get_time(e),tz=datetime.timezone.utc).isoformat()
+def rfc882_time(e):
+    return format_datetime(datetime.datetime.fromtimestamp(get_time(e),tz=datetime.timezone.utc))
 
 cleaner = bleach.Cleaner(
     bleach.ALLOWED_TAGS
@@ -230,12 +238,16 @@ async def update_feed(session, url):
             entry["description"] = cleaner.clean(lhtml.tostring(tree).decode("utf-8"))
         db.update_entry(entry)
     print("Processing done")
-
+    db.conn.commit()
+last_updated_at = None
 
 async def gen_feed():
-    print("Database update at", calendar.datetime.datetime.now())
+    global last_updated_at
+    now = datetime.datetime.now(datetime.timezone.utc)
+    last_updated_at = now.isoformat()
+    print("Database update at", now)
 
-    timeout = aiohttp.ClientTimeout(total=30)
+    timeout = aiohttp.ClientTimeout(total=60)
     async with aiohttp.ClientSession(timeout=timeout) as session:
         await asyncio.gather(*[update_feed(session, url) for url in feeds])
 
@@ -248,13 +260,6 @@ async def feed_generator():
 
 LIMIT = 50
 
-
-async def render_feed(page_key=None):
-    # entries,feed_data = await gen_feed()
-    entries, page_key = db.get_entries(LIMIT, page_key=page_key)
-    return await feed_template.render_async(entries=entries, page_key=page_key)
-
-
 routes = web.RouteTableDef()
 env = jinja2.Environment(
     loader=jinja2.FileSystemLoader("templates"),
@@ -262,15 +267,30 @@ env = jinja2.Environment(
     enable_async=True,
 )
 feed_template = env.get_template("feed.xml")
+atom_template = env.get_template("atom.xml")
 
+async def render_feed(page_key=None,template=feed_template,format_time=rfc882_time):
+    # entries,feed_data = await gen_feed()
+    entries, page_key = db.get_entries(LIMIT, page_key=page_key)
+    return await template.render_async(entries=entries, page_key=page_key,updated=last_updated_at,rfc_time=format_time)
 
 @routes.get("/")
+@routes.get("/rss.xml")
 async def index(request):
     next_param = request.rel_url.query.get("next", None)
     page_key = None
     if next_param:
         page_key = tuple(map(int, next_param.split(":")))
     b = await render_feed(page_key)
+    return web.Response(content_type="text/xml", body=b)
+
+@routes.get("/atom.xml")
+async def atom_feed(request):
+    next_param = request.rel_url.query.get("next", None)
+    page_key = None
+    if next_param:
+        page_key = tuple(map(int, next_param.split(":")))
+    b = await render_feed(page_key,template=atom_template,format_time=rfc3339_time)
     return web.Response(content_type="text/xml", body=b)
 
 
@@ -282,6 +302,9 @@ async def stylesheet(request):
 @routes.get("/feed.xsl")
 async def transform(request):
     return web.FileResponse("feed.xsl")
+@routes.get("/atom.xsl")
+async def transform(request):
+    return web.FileResponse("atom.xsl")
 
 
 @routes.get("/feed.html")
@@ -295,6 +318,7 @@ async def get_html_feed(request):
     html_feed = transform(xml_feed)
     lhtml.xhtml_to_html(html_feed)
     return web.Response(body=etree.tostring(html_feed), content_type="text/html")
+
 
 
 asyncio.run(gen_feed())

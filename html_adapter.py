@@ -19,6 +19,8 @@ class HTMLAdapter:
         self.url = url
         self.item_selector = item_selector
         self.selectors = selectors
+    def __repr__(self):
+        return f"HTMLAdapter({self.url})"
 
     async def __call__(self, session):
         parsed = {
