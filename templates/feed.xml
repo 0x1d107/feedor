@@ -28,6 +28,10 @@
             {% for enclosure in entry.enclosures %}
             <enclosure url="{{ enclosure.href }}" type="{{ enclosure.type }}" length="{{enclosure.length}}" />
             {%endfor%}
+            {% for enclosure in entry.media_content %}
+            <enclosure url="{{ enclosure.url }}" type="{{ enclosure.type }}" length="{{enclosure.length}}" />
+            {%endfor%}
+
         </item>
         {% endfor %}
     </channel>

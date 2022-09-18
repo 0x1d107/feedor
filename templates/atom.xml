@@ -22,6 +22,9 @@
         {% for link in entry.links %}
         <atom:link rel="{{link.rel}}" type="{{link.type}}" href="{{link.href}}" />
         {%endfor%}
+        {% for link in entry.media_content %}
+        <atom:link rel="enclosure" type="{{link.type}}" href="{{link.url}}" />
+        {%endfor%}
         {% if entry.title %}
         <atom:title>{{ entry.title }}</atom:title>
         {%else%}
