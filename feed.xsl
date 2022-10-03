@@ -35,13 +35,13 @@
     <xsl:template match="enclosure[starts-with(@type,'image')]">
         <details>
             <summary>Image Enclosure</summary>
-            <a href="{@url}" target="_blank"><img style="max-width:100%;" loading="lazy" src="{@url}"/></a>
+            <a href="{@url}" target="_blank"><img style="max-width:100%;display:block;margin:auto;" loading="lazy" src="{@url}"/></a>
         </details>
     </xsl:template>
     <xsl:template match="enclosure[starts-with(@type,'video')]">
         <details>
             <summary>Video Enclosure</summary>
-            <video style="max-width:100%" controls="true" preload="none">
+            <video style="max-width:100%;display:block;margin:auto;" controls="true" preload="none">
                 <source src="{@url}" type="{@type}"/>
             </video>
         </details>
