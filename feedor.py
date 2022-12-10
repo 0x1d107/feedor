@@ -1,4 +1,4 @@
-#!/bin/env python
+#!/home/nitro/Clones/feedor/.env/bin/python
 import asyncio 
 import aiohttp 
 from aiohttp import web
@@ -56,6 +56,9 @@ class database:
     """
     GET_PAGE_NEXT = """
         SELECT data,time,rowid FROM entries WHERE time < ? OR (time = ? AND rowid < ?) ORDER BY time DESC, rowid DESC LIMIT ? ;
+    """
+    GET_ENCLOSURE_URLS = """ 
+        select json_each.value->>'href' from entries, json_each(entries.data->'links') where json_each.value->>'rel' = 'enclosure' and json_each.value->>'type' like 'image/%';
     """
 
     def __init__(self, dbname="feeds.db"):
@@ -252,7 +255,7 @@ async def update_feed(session, url):
         if not entry.get("id"):
             entry["id"] = entry.get(
                 "link",
-                feed.url + ":" + md5(entry.get("description")).hexdigest(),
+                feed.url + ":" + md5(entry.get("description").encode('utf-8')).hexdigest(),
             )
         entry["source"] = feed.url
         if "description" in entry and entry["description"]:
@@ -284,7 +287,7 @@ async def gen_feed():
 async def feed_generator():
     while True:
         try:
-            await asyncio.sleep(300)
+            await asyncio.sleep(600)
             await asyncio.wait_for(gen_feed(),timeout=90)
         except asyncio.TimeoutError:
             print("Feed generator timed out")

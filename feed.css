@@ -10,7 +10,7 @@ a{
 body pre{
     font-size: 9pt;
     font-family: monospace;
-    overflow: scroll;
+    /*overflow: scroll;*/
 }
 code{
     font-family: monospace;
@@ -32,7 +32,7 @@ img{
     border-top: #555 solid 1px;
     border-bottom: #555 solid 1px;
     overflow-wrap: break-word;
-    overflow: scroll;
+    /*overflow: scroll;*/
     padding-top: 1em;
     padding-bottom: 1em;
 }
