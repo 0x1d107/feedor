@@ -1,4 +1,4 @@
-#!/home/nitro/Clones/feedor/.env/bin/python
+#!/home/nitro/Projects/feedor/.env/bin/python
 import asyncio 
 import aiohttp 
 from aiohttp import web
@@ -45,8 +45,14 @@ class database:
 
         );
     """
+    INIT_SEARCH="""
+        CREATE VIRTUAL TABLE search USING fts4(title,description);
+    """
     REPLACE = """
         REPLACE INTO entries(data,time) values (?,?);
+    """
+    REPLACE_SEARCH = """
+        REPLACE INTO search(docid,title,description) values (?,?,?); 
     """
     GET_ALL = """
         SELECT data,time,rowid FROM entries ORDER BY time DESC, rowid DESC ;
@@ -98,11 +104,40 @@ last_updated_at = None
 db = database()
 last_updated_at = datetime.datetime.utcfromtimestamp( getmtime('feeds.db')).isoformat()
 
+adapters = {
+        'tg': lambda x,*_: HTMLAdapter(
+            f"https://t.me/s/{x}",
+            CSSSelector(".tgme_widget_message"),
+            {
+                "title": css_text(".tgme_widget_message_owner_name"),
+                "description": css_html(".tgme_widget_message_text"),
+                "link": css_attr("a.tgme_widget_message_date", "href"),
+                "id": css_attr("a.tgme_widget_message_date", "href"),
+                "published": css_attr("time", "datetime"),
+                "published_parsed": lambda h: parse(
+                    css_attr("time", "datetime")(h)
+                ).timetuple()
+                if css_attr("time", "datetime")(h)
+                else None,
+                "links": lambda h: css_enclosures_regex(
+                    ".tgme_widget_message_photo_wrap", "style", r"url\('(.+)'\)", 1
+                )(h)
+                + css_enclosures("video", "src")(h),
+            },
+        ),
+
+}
+def adapt(url):
+    if "::" in url:
+        spec = url.split('::')
+        return adapters.get(spec[0],lambda x,*_:x)(*spec[1:])
+    return url
+
 
 feeds = []
 with open("feeds.txt") as f:
     feeds = [
-        line.strip()
+        adapt(line.strip())
         for line in f.readlines()
         if line.strip() and not line.startswith("#")
     ]
@@ -124,7 +159,6 @@ feeds.append(
         },
     )
 )
-"""
 feeds.append(
     HTMLAdapter(
         "https://t.me/s/var_log_shitpost",
@@ -170,6 +204,7 @@ feeds.append(
         },
     )
 )
+"""
 
 
 async def fetch(session, url):
