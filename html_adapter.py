@@ -41,6 +41,24 @@ class HTMLAdapter:
                 parsed["entries"].append(entry)
 
             return FeedParserDict(parsed)
+class JSONAdapter:
+    def __init__(self,url,get_items,get_entry,params=None):
+        self.url = url
+        self.get_items = get_items
+        self.get_entry = get_entry
+        self.params = params
+
+    async def __call__(self, session):
+        parsed = {
+            "url": self.url,
+            "feed": FeedParserDict(title="JSONParser Feed"),
+            "entries": [],
+        }
+        async with session.post(self.url,json=self.params) as resp:
+            parsed["entries"].extend([FeedParserDict(self.get_entry(e))  for e in
+                                      self.get_items(await resp.json())])
+
+            return FeedParserDict(parsed)
 
 
 def css_text(sel):

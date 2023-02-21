@@ -31,6 +31,9 @@
             {% for enclosure in entry.media_content %}
             <enclosure url="{{ enclosure.url }}" type="{{ enclosure.type }}" length="{{enclosure.length}}" />
             {%endfor%}
+            {% for enclosure in entry.media_thumbnail %}
+            <enclosure url="{{ enclosure.url }}" type="image/png" length="{{enclosure.length}}" />
+            {%endfor%}
 
         </item>
         {% endfor %}

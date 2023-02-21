@@ -32,7 +32,7 @@ img{
     border-top: #555 solid 1px;
     border-bottom: #555 solid 1px;
     overflow-wrap: break-word;
-    /*overflow: scroll;*/
+    overflow:auto;
     padding-top: 1em;
     padding-bottom: 1em;
 }
