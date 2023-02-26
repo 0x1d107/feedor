@@ -10,8 +10,12 @@ a{
 body pre{
     font-size: 9pt;
     font-family: monospace;
-    /*overflow: scroll;*/
+    overflow: auto;
 }
+#feed>li{
+    overflow: auto;
+}
+
 code{
     font-family: monospace;
 }
@@ -35,4 +39,15 @@ img{
     overflow:auto;
     padding-top: 1em;
     padding-bottom: 1em;
+}
+#search{
+    display:block;
+    width:100%;
+    text-align:center;
+}
+#search input[type="text"]{
+    width:80%;
+    display:inline;
+    
+    margin:0 auto;
 }

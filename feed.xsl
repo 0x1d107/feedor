@@ -12,14 +12,24 @@
             </head>
             <body>
                 <h1><a href="{link}"><xsl:value-of select="title" /></a></h1>
+
+                <form action="{textInput/link}" id="search">
+                    <input type="text" name="{textInput/name}"  />
+                    <input type="submit" value="{textInput/title}" />
+
+
+                </form>
                 <ul id="feed">
                     <xsl:apply-templates select="item" />
                 </ul>
-                <div style="text-align:center" id="next">
-                    <a  href="{generator}">Next</a>
-                </div>
+                <xsl:apply-templates select="generator" />
             </body>
         </html>
+    </xsl:template>
+    <xsl:template match="generator">
+        <div style="text-align:center" id="next">
+            <a  href="{current()}">Next</a>
+        </div>
     </xsl:template>
     <xsl:template match="item">
         <li>

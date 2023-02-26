@@ -295,7 +295,7 @@ async def gen_feed():
 async def feed_generator():
     while True:
         try:
-            await asyncio.sleep(600)
+            await asyncio.sleep(900)
             await asyncio.wait_for(gen_feed(), timeout=90)
         except asyncio.TimeoutError:
             print("Feed generator timed out")
@@ -327,7 +327,7 @@ async def render_feed(
 async def search_feed(query):
     entries,page_key = db.get_search(query)
 
-    return await feed_template.render_async(entries=entries,page_key=page_key,
+    return await feed_template.render_async(entries=entries,
                                             updated=last_updated_at,rfc_time=rfc882_time)
 
 @routes.get("/")
