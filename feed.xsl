@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns="http://www.w3.org/1999/xhtml">
+<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns="http://www.w3.org/1999/xhtml" xmlns:atom="http://www.w3.org/2005/Atom">
     <xsl:output method="html" indent="yes" encoding="UTF-8"/>
     <xsl:template match="/rss/channel">
         <html>
@@ -22,13 +22,13 @@
                 <ul id="feed">
                     <xsl:apply-templates select="item" />
                 </ul>
-                <xsl:apply-templates select="generator" />
+                <xsl:apply-templates select="atom:link[@rel='next']" />
             </body>
         </html>
     </xsl:template>
-    <xsl:template match="generator">
+    <xsl:template match="atom:link[@rel='next']">
         <div style="text-align:center" id="next">
-            <a  href="{current()}">Next</a>
+            <a  href="{@href}">Next</a>
         </div>
     </xsl:template>
     <xsl:template match="item">
