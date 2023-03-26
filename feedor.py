@@ -13,6 +13,7 @@ import lxml.html as lhtml
 from lxml import etree
 import lxml.html.clean as lclean
 from os.path import getmtime
+from html import unescape
 
 import bleach
 from html_sanitizer.sanitizer import Sanitizer, DEFAULT_SETTINGS
@@ -37,6 +38,7 @@ from argparse import ArgumentParser
 
 
 class database:
+    search_tokenizer='snowball russian english'
     INIT = """
         CREATE TABLE IF NOT EXISTS entries(
             entryid INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -47,14 +49,15 @@ class database:
 
         );
     """
-    INIT_SEARCH = """
-        CREATE VIRTUAL TABLE IF NOT EXISTS search USING fts4(title,description);
+    INIT_SEARCH = f"""
+        CREATE VIRTUAL TABLE IF NOT EXISTS search USING
+        fts5(title,description,source,tokenize='{search_tokenizer}');
     """
     REPLACE = """
         REPLACE INTO entries(data,time) values (?,?);
     """
     REPLACE_SEARCH = """
-        REPLACE INTO search(rowid,title,description) values (?,?,?); 
+        REPLACE INTO search(rowid,title,description,source) values (?,?,?,?); 
     """
     GET_ALL = """
         SELECT data,time,rowid FROM entries ORDER BY time DESC, rowid DESC ;
@@ -76,6 +79,9 @@ class database:
     def __init__(self, dbname="feeds.db"):
         self.conn = sqlite3.connect(dbname)
         self.cursor = self.conn.cursor()
+        if 'snowball' in database.search_tokenizer:
+            self.conn.enable_load_extension(True)
+            self.conn.load_extension('fts5-snowball/fts5stemmer.so')
         self.cursor.execute(database.INIT)
         self.cursor.execute(database.INIT_SEARCH)
 
@@ -88,7 +94,7 @@ class database:
 
         self.cursor.execute(database.REPLACE, [json.dumps(entry), pub_time])
         self.cursor.execute(database.REPLACE_SEARCH,[self.cursor.lastrowid,entry.get('title',''),
-                                                     entry.get('description','')])
+                                                     entry.get('description',''),entry.get('source','')])
 
 
     def get_entries(self, limit=0, page_key=None):
@@ -295,7 +301,7 @@ async def gen_feed():
 async def feed_generator():
     while True:
         try:
-            await asyncio.sleep(900)
+            await asyncio.sleep(args.update_period)
             await asyncio.wait_for(gen_feed(), timeout=90)
         except asyncio.TimeoutError:
             print("Feed generator timed out")
@@ -384,7 +390,7 @@ async def get_html_feed(request):
     return web.Response(body=etree.tostring(html_feed), content_type="text/html")
 @routes.get("/search")
 async def get_html_search(request):
-    query = request.rel_url.query.get('q')
+    query = unescape(request.query.get('q'))
     xml_feed = etree.XML((await search_feed(query)).encode("utf-8"))
     transform = etree.XSLT(etree.parse("feed.xsl"))
     html_feed = transform(xml_feed)
@@ -401,6 +407,23 @@ arg_parser.add_argument("-u", action="store_true", dest="update", help="Update f
 arg_parser.add_argument(
     "-n", type=int, dest="limit", help="Limit number of entries shown", default=50
 )
+arg_parser.add_argument('-t',dest="update_period", type= int, help="Seconds between database updates",default=900)
+def host_tuple(x):
+    l=x.split(':')
+    if not len(l):
+        return (None,None)
+    if len(l) == 1:
+        t= l[0]
+        if '.' in t:
+            return (t,None)
+        else:
+            return (None,int(t))
+    if len(l)>=2:
+        return (l[0],int(l[1]))
+
+arg_parser.add_argument('-p',dest="host_port",
+                        help="Host and port to listen to",
+                        type=host_tuple,default="127.0.0.1:8080")
 
 args = arg_parser.parse_args()
 LIMIT = args.limit
@@ -429,12 +452,14 @@ if args.file:
 
 async def serve():
     global feed_gen_task
-    feed_gen_task = asyncio.create_task(feed_generator())
+    if args.update:
+        feed_gen_task = asyncio.create_task(feed_generator())
     app = web.Application()
     app.add_routes(routes)
     runner = web.AppRunner(app)
     await runner.setup()
-    site = web.TCPSite(runner)
+    host,port = args.host_port
+    site = web.TCPSite(runner,host=host,port=port)
     await site.start()
     await asyncio.Event().wait()
 
