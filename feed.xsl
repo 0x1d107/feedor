@@ -8,7 +8,7 @@
                     <xsl:value-of select="title" />
                 </title>
                 <link rel="stylesheet" href="feed.css"/>
-                <link rel="alternate" href="/" type="application/rss+xml" title="RSS"/>
+                <link rel="alternate" href="{link}" type="application/rss+xml" title="RSS"/>
             </head>
             <body>
                 <h1><a href="{link}"><xsl:value-of select="title" /></a></h1>

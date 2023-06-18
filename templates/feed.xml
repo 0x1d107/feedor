@@ -14,7 +14,7 @@
             <title>Search</title>
             <description>Search rss feeds</description>
             <name>q</name>
-            <link>/search</link>
+            <link>search</link>
         </textInput>
         {% for entry in entries %}
         <item>

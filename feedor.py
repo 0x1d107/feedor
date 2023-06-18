@@ -53,11 +53,21 @@ class database:
         CREATE VIRTUAL TABLE IF NOT EXISTS search USING
         fts5(title,description,source,tokenize='{search_tokenizer}');
     """
+    INIT_ETAG="""
+        CREATE TABLE IF NOT EXISTS etags (
+            feed TEXT UNIQUE,
+            etag TEXT,
+            time NUMERIC
+        );
+    """
     REPLACE = """
         REPLACE INTO entries(data,time) values (?,?);
     """
     REPLACE_SEARCH = """
         REPLACE INTO search(rowid,title,description,source) values (?,?,?,?); 
+    """
+    REPLACE_ETAG = """
+        REPLACE INTO etags(feed,etag,time) values (?,?,?);
     """
     GET_ALL = """
         SELECT data,time,rowid FROM entries ORDER BY time DESC, rowid DESC ;
@@ -75,6 +85,9 @@ class database:
     GET_ENCLOSURE_URLS = """ 
         select json_each.value->>'href' from entries, json_each(entries.data->'links') where json_each.value->>'rel' = 'enclosure' and json_each.value->>'type' like 'image/%';
     """
+    GET_ETAG="""
+        SELECT etag,time from etags where feed = ?;
+    """
 
     def __init__(self, dbname="feeds.db"):
         self.conn = sqlite3.connect(dbname)
@@ -84,6 +97,7 @@ class database:
             self.conn.load_extension('fts5-snowball/fts5stemmer.so')
         self.cursor.execute(database.INIT)
         self.cursor.execute(database.INIT_SEARCH)
+        self.cursor.execute(database.INIT_ETAG)
 
     def __del__(self):
         self.conn.commit()
@@ -91,11 +105,9 @@ class database:
 
     def update_entry(self, entry):
         pub_time = get_time(entry)
-
         self.cursor.execute(database.REPLACE, [json.dumps(entry), pub_time])
         self.cursor.execute(database.REPLACE_SEARCH,[self.cursor.lastrowid,entry.get('title',''),
                                                      entry.get('description',''),entry.get('source','')])
-
 
     def get_entries(self, limit=0, page_key=None):
         if not limit:
@@ -124,6 +136,15 @@ class database:
                 obj["links"] = map(FeedParserDict, obj["links"])
             entries.append(obj)
         return entries,(0,0)
+    def set_etag(self, feed_url,etag):
+        ts = int(datetime.datetime.now().timestamp())
+        self.cursor.execute(self.REPLACE_ETAG,[feed_url,etag,ts])
+    def get_etag(self, feed_url):
+        self.cursor.execute(self.GET_ETAG,[feed_url])
+        res = self.cursor.fetchall()
+        if len(res) == 0:
+            return None,None
+        return res[0][0],res[0][1]
 
 last_updated_at = None
 db = database()
@@ -192,10 +213,21 @@ async def fetch(session, url):
         d = await url(session)
         print("Fetched", d.url)
         return d
-    async with session.get(url) as response:
+    hdrs={
+        'User-Agent': 'feedor.py-rss-aggergator',
+        'Content-Encoding': 'gzip'
+    }
+    etag,ts = db.get_etag(url)
+    if etag and not args.no_etag:
+        hdrs['If-None-Match'] = etag
+    if ts and not args.no_etag:
+        hdrs['If-Modified-Since'] = format_datetime(datetime.datetime.fromtimestamp(ts))
+    async with session.get(url,headers=hdrs) as response:
+        print("Fetched", url, response.status)
         d = feedparser.parse(BytesIO(await response.read()))
         d["url"] = url
-        print("Fetched", d.url)
+        if (etag := response.headers.get('ETag')):
+            db.set_etag(url, etag)
         return d
 
 
@@ -243,7 +275,7 @@ allowed_tags = [
     "sup",
 ]
 cleaner = bleach.Cleaner(
-    bleach.ALLOWED_TAGS + allowed_tags,
+    list(bleach.ALLOWED_TAGS) + allowed_tags,
     attributes=bleach.ALLOWED_ATTRIBUTES,
 )
 cleaner.attributes["img"] = ["src"]
@@ -264,7 +296,7 @@ async def update_feed(session, url):
     except aiohttp.ClientConnectionError as e:
         print(e)
         return
-    print("Processing")
+    print("Processing",len(feed.entries),'entries')
     for entry in feed.entries:
         entry["source_title"] = feed.feed.title
         if not entry.get("id"):
@@ -408,6 +440,7 @@ arg_parser.add_argument(
     "-n", type=int, dest="limit", help="Limit number of entries shown", default=50
 )
 arg_parser.add_argument('-t',dest="update_period", type= int, help="Seconds between database updates",default=900)
+arg_parser.add_argument('--no-etag', action='store_true', help="Disables ETag and Last-Modified checks")
 def host_tuple(x):
     l=x.split(':')
     if not len(l):
