@@ -13,12 +13,7 @@
             <body>
                 <h1><a href="{link}"><xsl:value-of select="title" /></a></h1>
 
-                <form action="{textInput/link}" id="search">
-                    <input type="text" name="{textInput/name}"  />
-                    <input type="submit" value="{textInput/title}" />
-
-
-                </form>
+                <xsl:apply-templates select="textInput" />
                 <ul id="feed">
                     <xsl:apply-templates select="item" />
                 </ul>
@@ -30,6 +25,12 @@
         <div style="text-align:center" id="next">
             <a  href="{@href}">Next</a>
         </div>
+    </xsl:template>
+    <xsl:template match="textInput">
+                <form action="{link}" id="search">
+                    <input type="text" name="{name}"  />
+                    <input type="submit" value="{title}" />
+                </form>
     </xsl:template>
     <xsl:template match="item">
         <li>

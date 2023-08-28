@@ -62,20 +62,25 @@ class JSONAdapter:
 
 
 def css_text(sel):
-    return (
-        lambda h: CSSSelector(sel)(h)[0].text_content() if CSSSelector(sel)(h) else None
-    )
-
-
+    def html2txt(h):
+        frag =  CSSSelector(sel)(h) 
+        if not frag:
+            return None
+        frag = frag[0]
+        for br in frag.xpath("*//br"):
+            br.tail = '\n'+br.tail if br.tail else '\n'
+        return frag.text_content()
+    return html2txt
+allowed_tags=set(bleach.ALLOWED_TAGS) or {'br'}
+cleaner = bleach.Cleaner(allowed_tags,strip=True)
 def css_html(sel):
     return (
-        lambda h: bleach.clean(
+        lambda h: cleaner.clean(
             (e[0].text if e[0].text else "")
             + "".join(
                 tostring(child, encoding="utf-8").decode("utf-8")
                 for child in e[0].iterchildren()
             ),
-            strip=True,
         )
         if (e := CSSSelector(sel)(h))
         else None
@@ -126,11 +131,11 @@ async def main():
         print(
             json.dumps(
                 await HTMLAdapter(
-                    "https://t.me/s/var_log_shitpost",
+                    "https://t.me/s/sapporolife",
                     CSSSelector(".tgme_widget_message"),
                     {
                         "title": css_text(".tgme_widget_message_owner_name"),
-                        "description": css_html(".tgme_widget_message_text"),
+                        "description": css_text(".tgme_widget_message_text"),
                         "link": css_attr("a.tgme_widget_message_date", "href"),
                         "id": css_attr("a.tgme_widget_message_date", "href"),
                         "published": css_attr("time", "datetime"),
