@@ -1,4 +1,3 @@
-#!/home/nitro/Projects/feedor/.env/bin/python
 import asyncio
 import aiohttp
 from aiohttp import web
@@ -38,6 +37,7 @@ from argparse import ArgumentParser
 
 
 class database:
+    # search_tokenizer = 'unicode61'
     search_tokenizer='snowball russian english'
     INIT = """
         CREATE TABLE IF NOT EXISTS entries(
@@ -150,45 +150,10 @@ last_updated_at = None
 db = database()
 last_updated_at = datetime.datetime.utcfromtimestamp(getmtime("feeds.db")).isoformat()
 
+from more_adapters import lazyblog_adapter,telegram_adapter
 adapters = {
-    "tg": lambda x, *_: HTMLAdapter(
-        f"https://t.me/s/{x}",
-        CSSSelector(".tgme_widget_message"),
-        {
-            "title": css_text(".tgme_widget_message_owner_name"),
-            "description": css_html(".tgme_widget_message_text"),
-            "link": css_attr("a.tgme_widget_message_date", "href"),
-            "id": css_attr("a.tgme_widget_message_date", "href"),
-            "published": css_attr("time", "datetime"),
-            "published_parsed": lambda h: parse(
-                css_attr("time", "datetime")(h)
-            ).timetuple()
-            if css_attr("time", "datetime")(h)
-            else None,
-            "links": lambda h: css_enclosures_regex(
-                ".tgme_widget_message_photo_wrap", "style", r"url\('(.+)'\)", 1
-            )(h)
-            + css_enclosures("video", "src")(h),
-        },
-    ),
-    "mk": lambda host,user,*_: JSONAdapter(
-            f"https://{host}/api/users/notes",
-            lambda rsp: rsp,
-            lambda it: {"title": it['user']['username']
-                        +(" RT "+it['renote']['user']['username'] if it.get('renote') else ''),
-                        "description": it["text"] if it.get('text') else 
-                        it['renote'].get('text','') if
-                        it.get('renote') else '',
-                        "link":f"https://{host}/notes/{it['id']}",
-                        "id":f"https://{host}/notes/{it['id']}",
-                        "published":it["createdAt"],
-                        "published_parsed":parse(it['createdAt']).timetuple(),
-                        "links":
-                        [FeedParserDict(href=f['url'],length=f['size'],type=f['type'],rel='enclosure') 
-                         for f in (it['files']+(it['renote']['files'] if it.get('renote') else []))]
-                        },
-            params={'userId':user,'limit':50}
-        ),
+    "tg": telegram_adapter,
+    "lb": lazyblog_adapter
 }
 
 
@@ -232,9 +197,10 @@ async def fetch(session, url):
 
 
 def get_time(e):
-    return calendar.timegm(
-        e.get("updated_parsed", e.get("published_parsed", time.gmtime(0)))
-    )
+    parsed =  e.get("updated_parsed", e.get("published_parsed", time.gmtime(0)))
+    if not parsed:
+        return calendar.timegm(time.gmtime(0))
+    return calendar.timegm(parsed)
 
 
 def rfc3339_time(e):
@@ -352,7 +318,8 @@ atom_template = env.get_template("atom.xml")
 
 
 async def render_feed(
-    page_key=None, template=feed_template, format_time=rfc882_time, limit=LIMIT
+    page_key=None, template=feed_template, format_time=rfc882_time, limit=LIMIT,
+    static=False
 ):
     entries, page_key = db.get_entries(limit, page_key=page_key)
     return await template.render_async(
@@ -360,6 +327,7 @@ async def render_feed(
         page_key=page_key,
         updated=last_updated_at,
         rfc_time=format_time,
+        static=static
     )
 
 async def search_feed(query):
@@ -439,7 +407,7 @@ arg_parser.add_argument("-u", action="store_true", dest="update", help="Update f
 arg_parser.add_argument(
     "-n", type=int, dest="limit", help="Limit number of entries shown", default=50
 )
-arg_parser.add_argument('-t',dest="update_period", type= int, help="Seconds between database updates",default=900)
+arg_parser.add_argument('-t',dest="update_period", type= int, help="Seconds between database updates",default=3600)
 arg_parser.add_argument('--no-etag', action='store_true', help="Disables ETag and Last-Modified checks")
 def host_tuple(x):
     l=x.split(':')
@@ -476,11 +444,11 @@ if args.file:
                 )
             )
         elif ext == "html":
-            xml_feed = etree.XML(asyncio.run(render_feed(limit=LIMIT)).encode("utf-8"))
+            xml_feed = etree.XML(asyncio.run(render_feed(limit=LIMIT,static=True)).encode("utf-8"))
             transform = etree.XSLT(etree.parse("feed.xsl"))
             file.write(etree.tostring(transform(xml_feed)).decode("utf-8"))
         else:
-            file.write(asyncio.run(render_feed(limit=LIMIT)))
+            file.write(asyncio.run(render_feed(limit=LIMIT,static=True)))
 
 
 async def serve():
