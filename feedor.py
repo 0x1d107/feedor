@@ -1,3 +1,4 @@
+#!/bin/env python
 import asyncio
 import aiohttp
 from aiohttp import web
@@ -229,7 +230,6 @@ allowed_tags = [
     "h4",
     "h5",
     "h6",
-    "img",
     "table",
     "thead",
     "tbody",
@@ -237,8 +237,12 @@ allowed_tags = [
     "tr",
     "td",
     "s",
+    "a",
     "sub",
     "sup",
+    "ul",
+    "ol",
+    "li"
 ]
 cleaner = bleach.Cleaner(
     list(bleach.ALLOWED_TAGS) + allowed_tags,
@@ -250,6 +254,9 @@ sanitizer = Sanitizer()
 for t in allowed_tags:
     sanitizer.tags.add(t)
 sanitizer.attributes["img"] = ["src"]
+import nh3
+def html_sanitize(html):
+    return nh3.clean(html,tags=set(allowed_tags))
 
 
 async def update_feed(session, url):
@@ -276,8 +283,7 @@ async def update_feed(session, url):
         if "description" in entry and entry["description"]:
             tree = lhtml.fromstring(entry.description)
             tree.make_links_absolute(feed.url)
-
-            entry["description"] = sanitizer.sanitize(
+            entry["description"] = html_sanitize(
                 lhtml.tostring(tree).decode("utf-8")
             )
         db.update_entry(entry)

@@ -2,15 +2,15 @@ body{
     font-family: sans-serif;
     background-color: #080808;
     color: #eee;
-    font-size: 13pt;
 }
 a{
     color:#14c4ff;
 }
 body pre{
-    font-size: 9pt;
     font-family: monospace;
     overflow: auto;
+    size:auto;
+    width:100%;
 }
 #feed>li{
     overflow: auto;
