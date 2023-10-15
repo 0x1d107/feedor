@@ -12,10 +12,24 @@ body pre{
     size:auto;
     width:100%;
 }
-#feed>li{
-    overflow: auto;
+#feed div.description{
+    overflow: hidden;
+    max-height: 32em;
+   text-overflow: ellipsis " [..]";
+   display: -webkit-box;
+   -webkit-line-clamp: 8; /* number of lines to show */
+           line-clamp: 8;
+   -webkit-box-orient: vertical;
 }
 
+#feed input:checked ~ div.description{
+    overflow:auto;
+    max-height: unset;
+   -webkit-line-clamp: none; /* number of lines to show */
+           line-clamp: none;
+
+
+}
 code{
     font-family: monospace;
 }
@@ -34,6 +48,7 @@ audio{
 }
 .source {
     font-size: 10pt;
+    display:inline-block;
 }
 #next{
     text-align: center;

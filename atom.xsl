@@ -23,10 +23,12 @@
     </xsl:template>
     <xsl:template match="atom:entry">
         <li>
-            <div class="source"><b>[<a href="{atom:source/atom:link[@rel='self']/@href}"><xsl:value-of select="atom:source/atom:title"/></a>@<xsl:value-of select="atom:updated"/>]</b></div> <h2><a href="{atom:link[@rel='alternate'][@type='text/html']/@href}"><xsl:value-of select="atom:title"/></a></h2>
-            <p >
+            <div class="source"><b>[<a href="{atom:source/atom:link[@rel='self']/@href}"><xsl:value-of select="atom:source/atom:title"/></a>@<xsl:value-of select="atom:updated"/>]</b></div> 
+            <input type="checkbox" class="more" />
+            <h2><a href="{atom:link[@rel='alternate'][@type='text/html']/@href}"><xsl:value-of select="atom:title"/></a></h2>
+            <div class="description">
                 <xsl:value-of select="atom:content" disable-output-escaping="yes"/>
-            </p>
+            </div>
             <p>
              <xsl:apply-templates select="atom:link[@rel='enclosure']" />
             </p>

@@ -34,10 +34,13 @@
     </xsl:template>
     <xsl:template match="item">
         <li>
-            <div class="source"><b>[<a href="{source/@url}"><xsl:value-of select="source"/></a>@<xsl:value-of select="pubDate"/>]</b></div> <h2><a href="{link}"><xsl:value-of select="title"/></a></h2>
-            <p >
+            <div class="source"><b>[<a href="{source/@url}"><xsl:value-of select="source"/></a>@<xsl:value-of select="pubDate"/>]</b>
+            </div> 
+            <input type="checkbox" class="more"/>
+            <h2><a href="{link}"><xsl:value-of select="title"/></a></h2>
+            <div class="description">
                 <xsl:value-of select="description" disable-output-escaping="yes"/>
-            </p>
+            </div>
             <p>
             <xsl:apply-templates select="enclosure" />
             </p>
