@@ -20,13 +20,14 @@ body pre{
    -webkit-line-clamp: 8; /* number of lines to show */
            line-clamp: 8;
    -webkit-box-orient: vertical;
+   font-size: 1.5ch;
 }
 
 #feed input:checked ~ div.description{
     overflow:auto;
     max-height: unset;
-   -webkit-line-clamp: none; /* number of lines to show */
-           line-clamp: none;
+   -webkit-line-clamp: unset; /* number of lines to show */
+           line-clamp: unset;
 
 
 }
@@ -47,8 +48,8 @@ audio{
     width: 100%;
 }
 .source {
-    font-size: 10pt;
-    display:inline-block;
+    font-size: 1ch;
+    display: inline;
 }
 #next{
     text-align: center;
@@ -69,6 +70,6 @@ audio{
 #search input[type="text"]{
     width:80%;
     display:inline;
-    
+
     margin:0 auto;
 }
