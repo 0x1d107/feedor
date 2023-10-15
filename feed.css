@@ -15,12 +15,12 @@ body pre{
 #feed div.description{
     overflow: hidden;
     /*max-height: 32em;*/
-   text-overflow: ellipsis " [..]";
+   text-overflow: ellipsis;
    display: -webkit-box;
    -webkit-line-clamp: 8; /* number of lines to show */
            line-clamp: 8;
    -webkit-box-orient: vertical;
-   font-size: 1.5ch;
+   font-size: 12pt;
 }
 
 #feed input:checked.more ~ div.description{
@@ -47,12 +47,16 @@ video{
 audio{
     width: 100%;
 }
-.source,label {
+.source {
     display: inline;
-    font-size:2ch;
+   font-size: 12pt;
 }
 label {
     float:right;
+    display:inline-block;
+    padding: 20px;
+   font-size: 16pt;
+
 }
 #next{
     text-align: center;
