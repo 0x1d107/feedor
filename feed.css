@@ -23,7 +23,7 @@ body pre{
    font-size: 1.5ch;
 }
 
-#feed input:checked ~ div.description{
+#feed input:checked.more ~ div.description{
     overflow:auto;
     max-height: unset;
    -webkit-line-clamp: unset; /* number of lines to show */
@@ -47,9 +47,9 @@ video{
 audio{
     width: 100%;
 }
-.source {
-    font-size: 1ch;
+.source,label {
     display: inline;
+    font-size: 2ch;
 }
 #next{
     text-align: center;

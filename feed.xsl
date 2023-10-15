@@ -36,7 +36,8 @@
         <li>
             <div class="source"><b>[<a href="{source/@url}"><xsl:value-of select="source"/></a>@<xsl:value-of select="pubDate"/>]</b>
             </div> 
-            <input type="checkbox" class="more"/>
+            <input type="checkbox" class="more" id="{guid}"/> 
+            <label for="{guid}">Read more</label> 
             <h2><a href="{link}"><xsl:value-of select="title"/></a></h2>
             <div class="description">
                 <xsl:value-of select="description" disable-output-escaping="yes"/>
