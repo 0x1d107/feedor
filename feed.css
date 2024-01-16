@@ -40,6 +40,7 @@ code{
 }
 img{
     max-width:100%;
+    max-height:100vh;
 }
 video{
     max-width:100%;
@@ -54,8 +55,9 @@ audio{
 label {
     float:right;
     display:inline-block;
-    padding: 20px;
-   font-size: 16pt;
+    padding: 0px 20px;
+    font-size: 14pt;
+    text-decoration:dotted underline;
 
 }
 #next{

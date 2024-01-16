@@ -14,7 +14,7 @@ from lxml import etree
 import lxml.html.clean as lclean
 from os.path import getmtime
 from html import unescape
-
+from urllib.parse import urljoin
 import bleach
 from html_sanitizer.sanitizer import Sanitizer, DEFAULT_SETTINGS
 
@@ -280,6 +280,8 @@ async def update_feed(session, url):
                 + md5(entry.get("description").encode("utf-8")).hexdigest(),
             )
         entry["source"] = feed.url
+        if "link" in entry:
+            entry["link"] = urljoin(feed.url,entry.link)
         if "description" in entry and entry["description"]:
             tree = lhtml.fromstring(entry.description)
             tree.make_links_absolute(feed.url)
